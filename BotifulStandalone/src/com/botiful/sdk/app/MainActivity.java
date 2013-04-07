@@ -7,9 +7,6 @@ import ioio.lib.api.exception.ConnectionLostException;
 import ioio.lib.util.BaseIOIOLooper;
 import ioio.lib.util.IOIOLooper;
 import ioio.lib.util.android.IOIOActivity;
-
-import com.botiful.standalone.sdk.R;
-
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
@@ -20,6 +17,11 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.botiful.standalone.sdk.R;
+
+/**
+ * This simple example activity demonstrates how to use IOIO to control Botiful
+ */
 public class MainActivity extends IOIOActivity {
 
 	// Speed for the left motor (range:0-10)
@@ -119,12 +121,15 @@ public class MainActivity extends IOIOActivity {
 			if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
 				switch (v.getId()) {
 				case R.id.buttonHeadUp:
-					headSpeed = 3;
+					headSpeed += 1;
+					if (headSpeed>10)
+						headSpeed = 10;
 					break;
 				case R.id.buttonHeadDown:
-					headSpeed = -3;
+					headSpeed -= 1;
+					if (headSpeed<-10)
+						headSpeed = -10;
 					break;
-
 				}
 			} else {
 				leftSpeed = 0;
@@ -142,17 +147,19 @@ public class MainActivity extends IOIOActivity {
 	 * be called repetitively until the IOIO gets disconnected.
 	 */
 	class Looper extends BaseIOIOLooper {
+		private static final int LOOP_CYCLE_MILLISECONDS = 100;
+		
 		/**
 		 * The wheels motors are controlled by PWM. There is two PWMs per motors
 		 */
 		private PwmOutput pwmLeft1;
 		private PwmOutput pwmLeft2;
-		private PwmOutput pwmB1;
-		private PwmOutput pwmB2;
+		private PwmOutput pwmRight1;
+		private PwmOutput pwmRight2;
 
 		/** The head motor is controlled by a 2 PWM */
-		private PwmOutput pwmMotorA;
-		private PwmOutput pwmMotorB;
+		private PwmOutput pwmHead1;
+		private PwmOutput pwmHead2;
 		private AnalogInput rotaryEncoder;
 
 		/**
@@ -173,12 +180,13 @@ public class MainActivity extends IOIOActivity {
 					txtStatus.setText(R.string.connection_status_ok);
 				}
 			});
-			int freq = 50000;
+			
+			final int freq = 50000; // PWM frequency in Hz
 			// ========= Wheels configuration =========
-			pwmLeft1 = ioio_.openPwmOutput(11, freq);
-			pwmLeft2 = ioio_.openPwmOutput(10, freq);
-			pwmB1 = ioio_.openPwmOutput(13, freq);
-			pwmB2 = ioio_.openPwmOutput(12, freq);
+			pwmRight1 = ioio_.openPwmOutput(11, freq);
+			pwmRight2 = ioio_.openPwmOutput(10, freq);
+			pwmLeft1 = ioio_.openPwmOutput(13, freq);
+			pwmLeft2 = ioio_.openPwmOutput(12, freq);
 
 			// The peripheral circuit can be turned OFF if necessary. It can be
 			// for instance used to minimize energy consumption (for instance
@@ -194,20 +202,25 @@ public class MainActivity extends IOIOActivity {
 			sleepMode.write(true);
 
 			// ========= Head configuration =========
-			pwmMotorA = ioio_.openPwmOutput(40, freq);
-			pwmMotorB = ioio_.openPwmOutput(39, freq);
+			pwmHead1 = ioio_.openPwmOutput(40, freq);
+			pwmHead2 = ioio_.openPwmOutput(39, freq);
 
 			// Turn the sleep mode of the motor driver to OFF
 			sleepMode = ioio_.openDigitalOutput(30);
 			sleepMode.write(true);
 
 			// Open the rotary encoder
+			// the voltage is proportional to the head angle
+			// minimum value ~0.9V <=> highest possible angle
+			// maximum value ~1.6V <=> lowest possible angle
 			rotaryEncoder = ioio_.openAnalogInput(45);
 
 		}
 
 		/**
-		 * Called repetitively while the IOIO is connected.
+		 * Called repetitively while the IOIO is connected. In this loop we send the commands to 
+		 * the various outputs (e.g. PWM controlled motors).<br />
+		 * All commands will be run for the duration of the loop 
 		 * 
 		 * @throws ConnectionLostException
 		 *             When IOIO connection is lost.
@@ -217,40 +230,65 @@ public class MainActivity extends IOIOActivity {
 		@Override
 		public void loop() throws ConnectionLostException {
 			int pwmValues[] = getPwmFromSpeed(leftSpeed);
-			pwmB1.setPulseWidth(pwmValues[2]);
-			pwmB2.setPulseWidth(pwmValues[3]);
-
-			pwmValues = getPwmFromSpeed(rightSpeed);
 			pwmLeft1.setPulseWidth(pwmValues[0]);
 			pwmLeft2.setPulseWidth(pwmValues[1]);
 
+			pwmValues = getPwmFromSpeed(rightSpeed);
+			pwmRight1.setPulseWidth(pwmValues[0]);
+			pwmRight2.setPulseWidth(pwmValues[1]);
+			
+			// reset wheels speed
+			leftSpeed = 0;
+			rightSpeed = 0;
+
 			try {
 				encoderValue = (int) (rotaryEncoder.getVoltage() * 100);
-
-				pwmValues = getPwmFromSpeed(rightSpeed);
-				if (encoderValue > 92)
-					pwmMotorA.setPulseWidth(pwmValues[0]);
-				else
-					pwmMotorA.setPulseWidth(0);
-
-				if (encoderValue < 158)
-					pwmMotorB.setPulseWidth(pwmValues[1]);
-				else
-					pwmMotorB.setPulseWidth(0);
+				pwmValues = getPwmFromSpeed(headSpeed);
+				
+				// depending on the current position of the head (angle) we move or not
+				
+				// if we want to raise the head
+				if (headSpeed>0) {
+					if (encoderValue > 92) {
+						// go ahead, there is still room
+						pwmHead1.setPulseWidth(pwmValues[0]);
+						pwmHead2.setPulseWidth(pwmValues[1]);
+					} else {
+						// we are at the highest point, stop the motor
+						headSpeed = 0;
+						pwmHead1.setPulseWidth(0);
+						pwmHead2.setPulseWidth(0);
+					}
+				} else {
+					// we want to lower the head
+					if (encoderValue < 158) {
+						// go ahead, there is still room
+						pwmHead1.setPulseWidth(pwmValues[0]);
+						pwmHead2.setPulseWidth(pwmValues[1]);						
+					} else {
+						// we are at the lowest point, stop the motor
+						headSpeed = 0;
+						pwmHead1.setPulseWidth(0);
+						pwmHead2.setPulseWidth(0);						
+					}					
+				}
+				
 
 			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				// this means we have not been able to get the angle of the head (rotary encoder position)
+				//  no action
 			}
 
 			try {
-				Thread.sleep(100);
+				Thread.sleep(LOOP_CYCLE_MILLISECONDS);
 			} catch (InterruptedException e) {
+				// wait period has been interrupted - most probably because the user has left the app
+				// no action
 			}
 		}
 
 		private int[] getPwmFromSpeed(int speed) {
-			int pwmDutyCyle[] = new int[4];
+			int pwmDutyCyle[] = new int[2];
 
 			if (speed > 0) {
 				pwmDutyCyle[0] = scaleDutyCyle(speed);
@@ -266,6 +304,12 @@ public class MainActivity extends IOIOActivity {
 			return pwmDutyCyle;
 		}
 
+		/**
+		 * Converts a user-friendly speed value in 0-10 to a PWM pulse width in microseconds<br />
+		 * The formula assumes a PWM frequency of 50kHz
+		 * @param speed user friendly speed value in [-10;10]
+		 * @return PWM width in microseconds, to be fed to the IOIO PwmOutput.
+		 */
 		private int scaleDutyCyle(int speed) {
 			return ((int) (4.1 * Math.log(Math.abs(speed)) + 11.0));
 		}
