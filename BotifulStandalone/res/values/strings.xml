@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="app_name">BotifulStandalone</string>
-	<string name="action_settings">Settings</string>
-	<string name="hello_world">Hello world!</string>
-	<string name="connection_status_notok">Not connected</string>
-	<string name="connection_status_ok">Connected</string>
+    <!-- App contexts -->
+    <string name="app_name">BotifulStandalone</string>
+    <string name="action_settings">Settings</string>
+    
+    <!-- Generic strings -->
+    <string name="connection_status_notok">Not connected</string>
+    <string name="connection_status_ok">Connected</string>
+    
+    <!-- LowLevelControlActivity strings -->
+    <string name="title_activity_low_level">LowLevelControlActivity</string>
+    <string name="peripheral_circuit">Peripheral circuit</string>
+    <string name="wheel_motor_sleep_mode">Wheels motors sleep mode</string>
+    <string name="left_engine_letter">L</string>
+    <string name="right_engine_letter">R</string>
+    <string name="head_motor_sleep_mode">Head motor sleep mode</string>
+    <string name="head">Head</string>
+    <string name="reset_all">Reset All Commands</string>
+    <string name="label_rotary_encoder">Rotary Encoder value:</string>
+    <string name="rotary_encoder_value_unknown">n/a</string>
+
 </resources>

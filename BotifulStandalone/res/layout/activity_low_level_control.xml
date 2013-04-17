@@ -1,0 +1,226 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".LowLevelControlActivity" >
+
+    <RelativeLayout
+        android:id="@+id/layout_connection_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp" >
+	    
+	    <TextView
+	        android:id="@+id/textStatus"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center_horizontal"
+	        android:text="@string/connection_status_notok"
+	        android:layout_centerVertical="true"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <ProgressBar
+	        android:id="@+id/spinner_status"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="10dp"
+	        android:layout_toRightOf="@+id/textStatus" />
+	</RelativeLayout>    
+    
+    <RelativeLayout
+        android:id="@+id/layout_peripheral_circuit_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_connection_status" >
+        
+	    <ToggleButton
+	        android:id="@+id/toggleButton_peripheral_circuit_control"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true" />
+	    
+	    <TextView
+	        android:id="@+id/label_peripheral_circuit_control"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/toggleButton_peripheral_circuit_control"
+	        android:layout_marginRight="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/peripheral_circuit"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/wheels_sleep_mode_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_peripheral_circuit_control" >
+        
+	    <ToggleButton
+	        android:id="@+id/toggleButton_wheels_sleep_mode_control"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true" />
+	    
+	    <TextView
+	        android:id="@+id/label_wheels_sleep_mode_control"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/toggleButton_wheels_sleep_mode_control"
+	        android:layout_marginRight="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/wheel_motor_sleep_mode"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/layout_left_wheel_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/wheels_sleep_mode_control" >
+        
+	    <SeekBar
+	        android:id="@+id/seekBarLeftWheel"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/labelLeftWheel" />
+	    
+	    <TextView
+	        android:id="@+id/labelLeftWheel"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
+	        android:layout_marginLeft="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/left_engine_letter"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/layout_right_wheel_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_left_wheel_control" >
+        
+	    <SeekBar
+	        android:id="@+id/seekBarRightWheel"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/labelRightWheel" />
+	    
+	    <TextView
+	        android:id="@+id/labelRightWheel"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
+	        android:layout_marginLeft="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/right_engine_letter"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/head_sleep_mode_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_right_wheel_control" >
+        
+	    <ToggleButton
+	        android:id="@+id/toggleButton_head_sleep_mode_control"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true" />
+	    
+	    <TextView
+	        android:id="@+id/label_head_sleep_mode_control"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/toggleButton_head_sleep_mode_control"
+	        android:layout_marginRight="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/head_motor_sleep_mode"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/layout_head_control"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/head_sleep_mode_control" >
+        
+	    <SeekBar
+	        android:id="@+id/seekBarHead"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_toLeftOf="@+id/labelHead" />
+	    
+	    <TextView
+	        android:id="@+id/labelHead"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
+	        android:layout_marginLeft="5dp"
+	        android:layout_centerVertical="true"
+	        android:text="@string/head"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/layout_head_rotaryEncoder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_head_control">
+        
+	    <TextView
+	        android:id="@+id/label_rotary_encoder"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginRight="5dp"
+	        android:text="@string/label_rotary_encoder"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <TextView
+	        android:id="@+id/value_rotary_encoder"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_toRightOf="@+id/label_rotary_encoder"
+	        android:text="@string/rotary_encoder_value_unknown"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </RelativeLayout>
+    
+    <Button
+        android:id="@+id/button_reset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="3dp"
+        android:layout_below="@+id/layout_head_rotaryEncoder"
+        android:text="@string/reset_all"
+        />
+
+
+</RelativeLayout>
