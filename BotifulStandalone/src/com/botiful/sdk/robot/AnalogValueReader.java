@@ -39,14 +39,16 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	public interface AnalogValueObserver {
 		/**
 		 * This interface method is called when a new value is available<br />
-		 * Warning: the output rate is very fast (1 kHz)
+		 * Warning: the output rate can be very fast (1 kHz)<br />
+		 * <b>Delegate the processing to another thread, CPU time here can lead to delayed/lost samples</b>
 		 * @param value new value in the [0,1] range
 		 */
 		public void onNewValue(final float value);
 		
 		/**
-		 * This interface method is called when the value has reached the predefined threshold
-		 * @param value new analog value in the [0,1] range
+		 * This interface method is called when the value has reached the predefined threshold<br />
+		 * <b>Delegate the processing to another thread, CPU time here can lead to delayed/lost samples</b>
+		 * @param value new analog value in the [0,1] range<br />
 		 * @param hysteresisComparatorEvent event that has triggered this callback (one of the {@link #HysteresisComparator} constants).
 		 */
 		public void onValueReachedThreshold(final float value, final int hysteresisComparatorEvent);
@@ -111,9 +113,11 @@ public class AnalogValueReader extends AbstractRoboticElement {
 						// log
 						Log.e(this.getClass().getName(),e.getMessage());
 					}
-				}
+				} // end of while loop
+
 			}
 		};
+		mReaderThread.setPriority(Thread.MAX_PRIORITY); // should be as close to real-time as possible
 		mReaderThread.start();
 	}
 	
@@ -145,22 +149,18 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	
 	/**
 	 * Subscribe to asynchronous value updates.<br />
-	 * If no observer is registered, it has no effect.
-	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} first to actually start the updates.
+	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} to actually start the updates.
 	 * @param updatePeriodMillis minimum update period in milliseconds
 	 */
 	public void subscribeToValuesUpdates(int updatePeriodMillis) {
-		if (mObserver != null) {
-			return;
-		}
 		mNotificationPeriodMillis = Math.max(0, updatePeriodMillis);
+		mObserverWantsPeriodicNotifications = true;
 	}
 
 	
 	/**
 	 * Subscribe to asynchronous threshold detection alerts<br />
-	 * If no observer is registered, it has no effect.
-	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} first to actually start the updates.<br />
+	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} to actually start the updates.<br />
 	 * If EVENT_NONE is passed, it cancels edge detection.
 	 * <ul>
 	 * <li>if event to detect is rising edge, the effective comparator thresholds are (t-{@value #HYSTERESIS_PROTECTION_RANGE},t)
@@ -172,10 +172,6 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * @throws IllegalArgumentException if the edges argument is not valid. 
 	 */
 	public void subscribeToThresholdDetectionUpdates(float threshold, int edgesToDetect) throws IllegalArgumentException {
-		if (mObserver != null) {
-			return;
-		}
-		
 		if (0 != (edgesToDetect & (HysteresisComparator.EVENT_FALLING_EDGE | HysteresisComparator.EVENT_RISING_EDGE))) {
 			// both edges - high state by default (one has to be picked)
 			mEdgeDetector = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
@@ -202,6 +198,9 @@ public class AnalogValueReader extends AbstractRoboticElement {
 			mEdgeDetector = null;
 		} else {
 			// bad argument
+			// cancel edge detection
+			mEdgeDetector = null;
+			// then throw an exception
 			throw new IllegalArgumentException();
 		}
 		
