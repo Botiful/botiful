@@ -67,8 +67,9 @@ public class LowLevelControlActivity extends IOIOActivity {
 		}
 
 		@Override
-		public void onValueReachedThreshold() {
-			// void TODO			
+		public void onValueReachedThreshold(float value, int hysteresisComparatorEvent) {
+			// TODO Auto-generated method stub
+			
 		}
 		
 	}
@@ -254,7 +255,8 @@ public class LowLevelControlActivity extends IOIOActivity {
 					Constants.ROTARY_ENCODER_ANALOG_INPUT_PIN);
 
 			mRotaryEncoderObserver = new RotaryEncoderObserver();
-			mRotaryEncoder.subscribeToValuesUpdates(mRotaryEncoderObserver,100);
+			mRotaryEncoder.setObserver(mRotaryEncoderObserver);
+			mRotaryEncoder.subscribeToValuesUpdates(100);
 		}
 
 		/**
