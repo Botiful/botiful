@@ -61,6 +61,20 @@ public class PwmSpeed {
 		mPulseWidth = scaleDutyCyle(mValue);
 	}
 	
+	/**
+	 * Increase the speed value by one. Has no effect if already at maximum.
+	 */
+	public void increase() {
+		setValue(mValue+1);
+	}
+	
+	/**
+	 * Decrease the speed value by one. Has no effect if already at minimum.
+	 */
+	public void decrease() {
+		setValue(mValue-1);
+	}
+	
 	public int getValue() {
 		return mValue;
 	}
@@ -81,7 +95,7 @@ public class PwmSpeed {
 	}
 	
 	/**
-	 * Get the pre-computed PWM pulse width in us (duty cycle) for the direct (positive) pin.
+	 * Get the pre-computed PWM pulse width in us for the direct (positive) pin.
 	 * @return the value to be passed to IOIO
 	 */
 	public int getPulseWidthForPositivePin() {
@@ -89,7 +103,7 @@ public class PwmSpeed {
 	}
 	
 	/**
-	 * Get the pre-computed PWM pulse width in us (duty cycle) for the reverse (negative) pin.
+	 * Get the pre-computed PWM pulse width in us for the reverse (negative) pin.
 	 * @return the value to be passed to IOIO
 	 */
 	public int getPulseWidthForReversePin() {

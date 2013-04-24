@@ -17,23 +17,21 @@ import android.widget.TextView;
 
 import com.botiful.sdk.R;
 import com.botiful.sdk.helpers.BluetoothHelper;
+import com.botiful.sdk.models.PwmSpeed;
+import com.botiful.sdk.robot.Constants;
 
 /**
- * This simple example activity demonstrates how to use IOIO to control Botiful
+ * This simple example activity demonstrates how to use IOIO to control Botiful.<br />
+ * It uses a IOIOActivity, which is a helper activity very easy to manage.<br />
+ * All actions are managed inside a periodic loop which runs in its own thread, it is mostly
+ * managed by the IOIOActivity (except for its creation in the createIOIOLooper() method).
  */
 public class IOIOLevelControlActivity extends IOIOActivity {
-
-	// Speed for the left motor (range:0-10)
-	private int leftSpeed;
-
-	// Speed for the right motor (range:0-10)
-	private int rightSpeed;
-
-	// Speed for the head motor (range:0-10)
-	private int headSpeed;
-
-	// Head position (range:0-10)
-	private int encoderValue;
+	
+	// speeds of the various motors
+	private PwmSpeed leftSpeed,rightSpeed,headSpeed;
+	// Head angle, range: Constants.ROTARY_ENCODER_MIN_VALUE to ROTARY_ENCODER_MAX_VALUE
+	private float encoderValue;
 
 	// Manage the button UI
 	private ImageButton btnForward;
@@ -50,6 +48,7 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		// get handles to UI components
 		btnForward = (ImageButton) findViewById(R.id.moveForward);
 		btnLeft = (ImageButton) findViewById(R.id.moveLeft);
 		btnRight = (ImageButton) findViewById(R.id.moveRight);
@@ -57,7 +56,10 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 
 		btnHeadUp = (Button) findViewById(R.id.buttonHeadUp);
 		btnHeadDown = (Button) findViewById(R.id.buttonHeadDown);
+		
+		txtStatus = (TextView) findViewById(R.id.textStatus);
 
+		// set the action listeners
 		MoveOnTouchListener mv = new MoveOnTouchListener();
 		btnForward.setOnTouchListener(mv);
 		btnLeft.setOnTouchListener(mv);
@@ -70,9 +72,11 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 
 		// Ask to enable Bluetooth if not already enabled
 		BluetoothHelper.enableBluetooth(this);
-
-		txtStatus = (TextView) findViewById(R.id.textStatus);
-
+		
+		// init motor speeds
+		leftSpeed = new PwmSpeed(0);
+		rightSpeed = new PwmSpeed(0);
+		headSpeed = new PwmSpeed(0);
 	}
 
 	@Override
@@ -89,25 +93,25 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 			if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
 				switch (v.getId()) {
 				case R.id.moveForward:
-					leftSpeed = 10;
-					rightSpeed = 10;
+					leftSpeed = new PwmSpeed(PwmSpeed.MAX);
+					rightSpeed = new PwmSpeed(PwmSpeed.MAX);
 					break;
 				case R.id.moveBackward:
-					leftSpeed = -10;
-					rightSpeed = -10;
+					leftSpeed = new PwmSpeed(-PwmSpeed.MAX);
+					rightSpeed = new PwmSpeed(-PwmSpeed.MAX);
 					break;
 				case R.id.moveLeft:
-					leftSpeed = -10;
-					rightSpeed = 10;
+					leftSpeed = new PwmSpeed(-PwmSpeed.MAX);
+					rightSpeed = new PwmSpeed(PwmSpeed.MAX);
 					break;
 				case R.id.moveRight:
-					leftSpeed = 10;
-					rightSpeed = -10;
+					leftSpeed = new PwmSpeed(PwmSpeed.MAX);
+					rightSpeed = new PwmSpeed(-PwmSpeed.MAX);
 					break;
 				}
 			} else {
-				leftSpeed = 0;
-				rightSpeed = 0;
+				leftSpeed = new PwmSpeed(0);
+				rightSpeed = new PwmSpeed(0);
 			}
 			return false;
 		}
@@ -120,19 +124,12 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 			if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
 				switch (v.getId()) {
 				case R.id.buttonHeadUp:
-					headSpeed += 1;
-					if (headSpeed>10)
-						headSpeed = 10;
+					headSpeed.increase();
 					break;
 				case R.id.buttonHeadDown:
-					headSpeed -= 1;
-					if (headSpeed<-10)
-						headSpeed = -10;
+					headSpeed.decrease();
 					break;
 				}
-			} else {
-				leftSpeed = 0;
-				rightSpeed = 0;
 			}
 			return false;
 		}
@@ -180,39 +177,38 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 				}
 			});
 			
-			final int freq = 50000; // PWM frequency in Hz
 			// ========= Wheels configuration =========
-			pwmRight1 = ioio_.openPwmOutput(11, freq);
-			pwmRight2 = ioio_.openPwmOutput(10, freq);
-			pwmLeft1 = ioio_.openPwmOutput(13, freq);
-			pwmLeft2 = ioio_.openPwmOutput(12, freq);
+			pwmRight1 = ioio_.openPwmOutput(Constants.LEFT_WHEEL_POSITIVE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
+			pwmRight2 = ioio_.openPwmOutput(Constants.LEFT_WHEEL_REVERSE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
+			pwmLeft1 = ioio_.openPwmOutput(Constants.RIGHT_WHEEL_POSITIVE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
+			pwmLeft2 = ioio_.openPwmOutput(Constants.RIGHT_WHEEL_REVERSE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
 
 			// The peripheral circuit can be turned OFF if necessary. It can be
 			// for instance used to minimize energy consumption (for instance
 			// when the robot is charging). Right now we set it to ON
-			DigitalOutput powerInMotorCircuit = ioio_.openDigitalOutput(20);
+			DigitalOutput powerInMotorCircuit = ioio_.openDigitalOutput(Constants.PERIPHERAL_CIRCUIT_DIGITAL_OUTPUT_PIN);
 			powerInMotorCircuit.write(false);
 
 			// Motors drivers can use a sleep mode that allows minimun current
 			// consumption. When set to ON, motors are consuming a very small
 			// amount of current but cannot move anymore
 			// For the example we turn the sleep mode to OFF
-			DigitalOutput sleepMode = ioio_.openDigitalOutput(29);
+			DigitalOutput sleepMode = ioio_.openDigitalOutput(Constants.WHEELS_MOTOR_DRIVERS_SLEEP_MODE_PIN);
 			sleepMode.write(true);
 
 			// ========= Head configuration =========
-			pwmHead1 = ioio_.openPwmOutput(40, freq);
-			pwmHead2 = ioio_.openPwmOutput(39, freq);
+			pwmHead1 = ioio_.openPwmOutput(Constants.HEAD_POSITIVE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
+			pwmHead2 = ioio_.openPwmOutput(Constants.HEAD_REVERSE_PWM_OUTPUT_PIN, Constants.PWM_FREQUENCY);
 
 			// Turn the sleep mode of the motor driver to OFF
-			sleepMode = ioio_.openDigitalOutput(30);
+			sleepMode = ioio_.openDigitalOutput(Constants.HEAD_MOTOR_DRIVERS_SLEEP_MODE_PIN);
 			sleepMode.write(true);
 
 			// Open the rotary encoder
 			// the voltage is proportional to the head angle
-			// minimum value ~0.9V <=> highest possible angle
-			// maximum value ~1.6V <=> lowest possible angle
-			rotaryEncoder = ioio_.openAnalogInput(45);
+			// minimum value ~0.26 <=> highest possible angle
+			// maximum value ~0.49 <=> lowest possible angle
+			rotaryEncoder = ioio_.openAnalogInput(Constants.ROTARY_ENCODER_ANALOG_INPUT_PIN);
 
 		}
 
@@ -228,49 +224,36 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 		 */
 		@Override
 		public void loop() throws ConnectionLostException {
-			int pwmValues[] = getPwmFromSpeed(leftSpeed);
-			pwmLeft1.setPulseWidth(pwmValues[0]);
-			pwmLeft2.setPulseWidth(pwmValues[1]);
+			pwmLeft1.setPulseWidth(leftSpeed.getPulseWidthForPositivePin());
+			pwmLeft2.setPulseWidth(leftSpeed.getPulseWidthForReversePin());
 
-			pwmValues = getPwmFromSpeed(rightSpeed);
-			pwmRight1.setPulseWidth(pwmValues[0]);
-			pwmRight2.setPulseWidth(pwmValues[1]);
+			pwmRight1.setPulseWidth(rightSpeed.getPulseWidthForPositivePin());
+			pwmRight2.setPulseWidth(rightSpeed.getPulseWidthForReversePin());
 			
 			// reset wheels speed
-			leftSpeed = 0;
-			rightSpeed = 0;
+			leftSpeed = new PwmSpeed(0);
+			rightSpeed = new PwmSpeed(0);
 
 			try {
-				encoderValue = (int) (rotaryEncoder.getVoltage() * 100);
-				pwmValues = getPwmFromSpeed(headSpeed);
+				encoderValue = rotaryEncoder.read();
 				
-				// depending on the current position of the head (angle) we move or not
-				
-				// if we want to raise the head
-				if (headSpeed>0) {
-					if (encoderValue > 92) {
-						// go ahead, there is still room
-						pwmHead1.setPulseWidth(pwmValues[0]);
-						pwmHead2.setPulseWidth(pwmValues[1]);
-					} else {
-						// we are at the highest point, stop the motor
-						headSpeed = 0;
-						pwmHead1.setPulseWidth(0);
-						pwmHead2.setPulseWidth(0);
+				// depending on the current position of the head (angle) we move or not				
+				// if we are raising the head
+				if (headSpeed.isPositive()) {
+					if (encoderValue <= Constants.ROTARY_ENCODER_MIN_VALUE) {
+						// we are at the highest point (lowest value), stop the motor
+						headSpeed = new PwmSpeed(0);
 					}
 				} else {
-					// we want to lower the head
-					if (encoderValue < 158) {
-						// go ahead, there is still room
-						pwmHead1.setPulseWidth(pwmValues[0]);
-						pwmHead2.setPulseWidth(pwmValues[1]);						
-					} else {
-						// we are at the lowest point, stop the motor
-						headSpeed = 0;
-						pwmHead1.setPulseWidth(0);
-						pwmHead2.setPulseWidth(0);						
+					// we are lowering the head
+					if (encoderValue >= Constants.ROTARY_ENCODER_MAX_VALUE) {
+						// we are at the lowest point (highest value), stop the motor
+						headSpeed = new PwmSpeed(0);				
 					}					
 				}
+				// apply speed
+				pwmHead1.setPulseWidth(headSpeed.getPulseWidthForPositivePin());
+				pwmHead2.setPulseWidth(headSpeed.getPulseWidthForReversePin());
 				
 
 			} catch (InterruptedException e1) {
@@ -285,34 +268,6 @@ public class IOIOLevelControlActivity extends IOIOActivity {
 				// no action
 			}
 		}
-
-		private int[] getPwmFromSpeed(int speed) {
-			int pwmDutyCyle[] = new int[2];
-
-			if (speed > 0) {
-				pwmDutyCyle[0] = scaleDutyCyle(speed);
-				pwmDutyCyle[1] = 0;
-			} else if (speed < 0) {
-				pwmDutyCyle[0] = 0;
-				pwmDutyCyle[1] = scaleDutyCyle(speed);
-			} else {
-				pwmDutyCyle[0] = 0;
-				pwmDutyCyle[1] = 0;
-			}
-
-			return pwmDutyCyle;
-		}
-
-		/**
-		 * Converts a user-friendly speed value in 0-10 to a PWM pulse width in microseconds<br />
-		 * The formula assumes a PWM frequency of 50kHz
-		 * @param speed user friendly speed value in [-10;10]
-		 * @return PWM width in microseconds, to be fed to the IOIO PwmOutput.
-		 */
-		private int scaleDutyCyle(int speed) {
-			return ((int) (4.1 * Math.log(Math.abs(speed)) + 11.0));
-		}
-
 	}
 
 	/**
