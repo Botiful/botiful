@@ -28,10 +28,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	/** minimum update period to notify the observer in milliseconds */
 	private long mNotificationPeriodMillis;
 	private boolean mObserverWantsPeriodicNotifications;
-	/** Threshold set to notify observer */
-	private HysteresisComparator mEdgeDetector;
-	/** Tells if the observer wants to be notified of one of the HysteresisComparator.EVENT_... constants */
-	private int mTypeOfEdgeToDetect;
+	/** Threshold detectors */
+	private HysteresisComparator mRisingEdgeDetector,mFallingEdgeDetector;
 	
 	/**
 	 * A custom interface to specify entry point for asynchronous updates
@@ -46,12 +44,18 @@ public class AnalogValueReader extends AbstractRoboticElement {
 		public void onNewValue(final float value);
 		
 		/**
-		 * This interface method is called when the value has reached the predefined threshold<br />
+		 * This interface method is called when the value gets above the predefined threshold<br />
 		 * <b>Delegate the processing to another thread, CPU time here can lead to delayed/lost samples</b>
 		 * @param value new analog value in the [0,1] range<br />
-		 * @param hysteresisComparatorEvent event that has triggered this callback (one of the {@link #HysteresisComparator} constants).
 		 */
-		public void onValueReachedThreshold(final float value, final int hysteresisComparatorEvent);
+		public void onValueAlertAboveThreshold(float value);
+
+		/**
+		 * This interface method is called when the value gets below the predefined threshold<br />
+		 * <b>Delegate the processing to another thread, CPU time here can lead to delayed/lost samples</b>
+		 * @param value new analog value in the [0,1] range<br />
+		 */
+		public void onValueAlertBelowThreshold(float value);
 	}
 
 	/**
@@ -68,8 +72,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 		mObserver = null;
 		mLastValue = Float.NaN;
 		mObserverWantsPeriodicNotifications = false;
-		mEdgeDetector = null;
-		mTypeOfEdgeToDetect = HysteresisComparator.EVENT_NONE;
+		mRisingEdgeDetector = null;
+		mFallingEdgeDetector = null;
 		mReaderThread = null;
 		
 	}
@@ -95,10 +99,15 @@ public class AnalogValueReader extends AbstractRoboticElement {
 						}
 						
 						// notify of threshold detection
-						if (mEdgeDetector != null && 
-								0 != (mTypeOfEdgeToDetect & mEdgeDetector.inputNewValue(mLastValue)) &&
+						if (mRisingEdgeDetector != null && 
+								HysteresisComparator.EVENT_RISING_EDGE == mRisingEdgeDetector.inputNewValue(mLastValue) &&
 								mObserver!=null) {
-							mObserver.onValueReachedThreshold(mLastValue,mEdgeDetector.getLastEvent());
+							mObserver.onValueAlertAboveThreshold(mLastValue);
+						}
+						if (mFallingEdgeDetector != null && 
+								HysteresisComparator.EVENT_FALLING_EDGE == mFallingEdgeDetector.inputNewValue(mLastValue) &&
+								mObserver!=null) {
+							mObserver.onValueAlertBelowThreshold(mLastValue);
 						}
 						
 					} catch (InterruptedException e) {
@@ -108,8 +117,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 						// connection to bot lost -- cancel this thread
 						mObserver = null;
 						mObserverWantsPeriodicNotifications = false;
-						mEdgeDetector = null;
-						mTypeOfEdgeToDetect = HysteresisComparator.EVENT_NONE;
+						mRisingEdgeDetector = null;
+						mFallingEdgeDetector = null;
 						// log
 						Log.e(this.getClass().getName(),e.getMessage());
 					}
@@ -117,7 +126,7 @@ public class AnalogValueReader extends AbstractRoboticElement {
 
 			}
 		};
-		mReaderThread.setPriority(Thread.MAX_PRIORITY); // should be as close to real-time as possible
+		mReaderThread.setPriority(8); // should be as close to real-time as possible, but we don't want to freeze the UI either
 		mReaderThread.start();
 	}
 	
@@ -159,51 +168,35 @@ public class AnalogValueReader extends AbstractRoboticElement {
 
 	
 	/**
-	 * Subscribe to asynchronous threshold detection alerts<br />
+	 * Subscribe to asynchronous rising edge threshold detection (detects if a value goes above a certain threshold)<br />
 	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} to actually start the updates.<br />
-	 * If EVENT_NONE is passed, it cancels edge detection.
-	 * <ul>
-	 * <li>if event to detect is rising edge, the effective comparator thresholds are (t-{@value #HYSTERESIS_PROTECTION_RANGE},t)
-	 * <li>if event to detect is falling edge, the effective comparator thresholds are (t,t+{@value #HYSTERESIS_PROTECTION_RANGE})
-	 * <li>if both events are required, the effective comparator thresholds are (t-{@value #HYSTERESIS_PROTECTION_RANGE},t+{@value #HYSTERESIS_PROTECTION_RANGE})
-	 * </ul>
+	 * If threshold passed if Float.NaN, it cancels edge detection.
 	 * @param threshold threshold to trigger alerts.
-	 * @param edgesToDetect type of events to detect, a combination of the HysteresisComparator events.
-	 * @throws IllegalArgumentException if the edges argument is not valid. 
 	 */
-	public void subscribeToThresholdDetectionUpdates(float threshold, int edgesToDetect) throws IllegalArgumentException {
-		if (0 != (edgesToDetect & (HysteresisComparator.EVENT_FALLING_EDGE | HysteresisComparator.EVENT_RISING_EDGE))) {
-			// both edges - high state by default (one has to be picked)
-			mEdgeDetector = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
-					threshold+HYSTERESIS_PROTECTION_RANGE,
-					threshold,
-					true);
-			mTypeOfEdgeToDetect = edgesToDetect;
-		} else if (0 != (edgesToDetect & HysteresisComparator.EVENT_FALLING_EDGE)) {
-			// falling edge only - high state by default
-			mEdgeDetector = new HysteresisComparator(threshold,
-					threshold+HYSTERESIS_PROTECTION_RANGE,
-					threshold+HYSTERESIS_PROTECTION_RANGE,
-					true);
-			mTypeOfEdgeToDetect = edgesToDetect;
-		} else if (0 != (edgesToDetect & HysteresisComparator.EVENT_RISING_EDGE)) {
-			// rising edge only - low state by default
-			mEdgeDetector = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
-					threshold,
-					threshold-HYSTERESIS_PROTECTION_RANGE,
-					true);
-			mTypeOfEdgeToDetect = edgesToDetect;
-		} else if (edgesToDetect == HysteresisComparator.EVENT_NONE) {
-			// cancel edge detection
-			mEdgeDetector = null;
+	public void subscribeToRisingEdgeThresholdDetection(float threshold) {
+		if (Float.isNaN(threshold)) {
+			mRisingEdgeDetector = null;
 		} else {
-			// bad argument
-			// cancel edge detection
-			mEdgeDetector = null;
-			// then throw an exception
-			throw new IllegalArgumentException();
+			mRisingEdgeDetector = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
+					threshold,
+					false);
 		}
-		
+	}
+	
+	/**
+	 * Subscribe to asynchronous falling edge threshold detection (detects if a value goes below a certain threshold)<br />
+	 * Use {@link #AnalogValueReader.setObserver(AnalogValueObserver) setObserver} to actually start the updates.<br />
+	 * If threshold passed if Float.NaN, it cancels edge detection.
+	 * @param threshold threshold to trigger alerts.
+	 */
+	public void subscribeToFallingEdgeThresholdDetection(float threshold) {
+		if (Float.isNaN(threshold)) {
+			mFallingEdgeDetector = null;
+		} else {
+			mFallingEdgeDetector = new HysteresisComparator(threshold,
+					threshold+HYSTERESIS_PROTECTION_RANGE,
+					true);
+		}
 	}
 	
 	/**
@@ -212,8 +205,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	public void deleteObserver() {
 		mObserver = null; // this causes the thread to quit
 		mObserverWantsPeriodicNotifications = false;
-		mEdgeDetector = null;
-		mTypeOfEdgeToDetect = HysteresisComparator.EVENT_NONE;
+		mRisingEdgeDetector = null;
+		mFallingEdgeDetector = null;
 		try {
 			mReaderThread.join();
 		} catch (InterruptedException e) {

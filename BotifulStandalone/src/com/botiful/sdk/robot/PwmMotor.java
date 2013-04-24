@@ -41,6 +41,18 @@ public class PwmMotor extends AbstractRoboticElement {
 			mPwmPositiveOutput.setPulseWidth(mPwmSpeed.getPulseWidthForPositivePin());
 			mPwmReverseOutput.setPulseWidth(mPwmSpeed.getPulseWidthForReversePin());
 		}
-	}	
+	}
+	
+	/**
+	 * Stops the motor (applies a null speed)
+	 * @throws ConnectionLostException when connection to the robot is lost
+	 */
+	public void stop() throws ConnectionLostException {
+		setSpeed(new PwmSpeed(0));
+	}
+	
+	public PwmSpeed getSpeed() {
+		return mPwmSpeed;
+	}
 
 }

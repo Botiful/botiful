@@ -17,17 +17,14 @@ public class HysteresisComparator {
 	
 	/**
 	 * Instantiate the comparator, initializes all values<br />
-	 * If the initial value is either below the low threshold or above the high threshold an event is triggered
 	 * @param lowThreshold lower threshold (to detect falling edge events)
 	 * @param highThreshold higher threshold (to detect rising edge events)
-	 * @param initialValue initial value put into the comparator.
-	 * @param defaultState default state to use if the initial value is in-between the thresholds (true<=>high state)
+	 * @param defaultState default state to use (true<=>high state)
 	 */
-	public HysteresisComparator(float lowThreshold,float highThreshold, float initialValue, boolean defaultState) {
+	public HysteresisComparator(float lowThreshold,float highThreshold, boolean defaultState) {
 		mLowThreshold =  lowThreshold;
 		mHighThreshold = highThreshold;
 		mIsStateHigh = defaultState;
-		inputNewValue(initialValue); // this will trigger a state change if needed		
 	}
 	
 	/**

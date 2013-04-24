@@ -20,5 +20,7 @@
     <string name="reset_all">Reset All Commands</string>
     <string name="label_rotary_encoder">Rotary Encoder value:</string>
     <string name="rotary_encoder_value_unknown">n/a</string>
-
+    <string name="label_rotary_encoder_threshold_above">Stop when value is above </string>
+    <string name="label_rotary_encoder_threshold_below">Stop when value is below </string>
+    
 </resources>

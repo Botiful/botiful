@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
@@ -16,7 +17,6 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.botiful.standalone.sdk.R;
 import com.botiful.sdk.helpers.BluetoothHelper;
 import com.botiful.sdk.models.PwmSpeed;
 import com.botiful.sdk.robot.AnalogValueReader;
@@ -24,11 +24,16 @@ import com.botiful.sdk.robot.AnalogValueReader.AnalogValueObserver;
 import com.botiful.sdk.robot.Constants;
 import com.botiful.sdk.robot.PwmMotor;
 import com.botiful.sdk.robot.Switch;
+import com.botiful.standalone.sdk.R;
 
 /**
  * Simple Example activity to manage all peripherals at low level
  */
-public class LowLevelControlActivity extends IOIOActivity {	
+public class LowLevelControlActivity extends IOIOActivity {
+	// constants
+	private static final float ROTARY_ENCODER_MAX = .49f;
+	private static final float ROTARY_ENCODER_MIN = .26f;
+	
 	// members - widgets
 	private ToggleButton mPeripheralCircuitToggle;
 	private ToggleButton mWheelsSleepMode;
@@ -40,6 +45,8 @@ public class LowLevelControlActivity extends IOIOActivity {
 	private Button mResetAllButton;
 	private ProgressBar mSpinnerStatus;
 	private TextView mRotaryEncoderValueLabel;
+	private CheckBox mRotEncStopAbove,mRotEncStopBelow;
+	private TextView mRotEncStopAboveText,mRotEncStopBelowText;
 	
 	// other members
 	/** Two wheels with independent motors */
@@ -67,8 +74,37 @@ public class LowLevelControlActivity extends IOIOActivity {
 		}
 
 		@Override
-		public void onValueReachedThreshold(float value, int hysteresisComparatorEvent) {
-			// TODO Auto-generated method stub
+		public void onValueAlertAboveThreshold(float value) {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					if (headMotor != null && !headMotor.getSpeed().isPositive()) {
+						try {
+							headMotor.stop();
+						} catch (ConnectionLostException e) {
+							e.printStackTrace();
+							setConnectionStatus(false);
+						}
+					}
+				}
+			});			
+		}
+
+		@Override
+		public void onValueAlertBelowThreshold(float value) {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					if (headMotor != null && headMotor.getSpeed().isPositive()) {
+						try {
+							headMotor.stop();
+						} catch (ConnectionLostException e) {
+							e.printStackTrace();
+							setConnectionStatus(false);
+						}
+					}
+				}
+			});	
 			
 		}
 		
@@ -76,7 +112,7 @@ public class LowLevelControlActivity extends IOIOActivity {
 	
 	
 	// manages actions for the toggle buttons
-	private OnCheckedChangeListener mToggleButtonsChangeListener = new OnCheckedChangeListener() {
+	private OnCheckedChangeListener mOnCheckedChangeListener = new OnCheckedChangeListener() {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			switch (buttonView.getId()) {
@@ -88,6 +124,12 @@ public class LowLevelControlActivity extends IOIOActivity {
 				break;
 			case R.id.toggleButton_head_sleep_mode_control:
 				switchSwitch(mHeadSleepSwitch,isChecked);
+				break;
+			case R.id.checkbox_rotary_encoder_threshold_above:
+				setThresholdDetection(mRotaryEncoder, isChecked, true);
+				break;
+			case R.id.checkbox_rotary_encoder_threshold_below:
+				setThresholdDetection(mRotaryEncoder, isChecked, false);
 				break;
 			default:
 				// void
@@ -141,17 +183,23 @@ public class LowLevelControlActivity extends IOIOActivity {
 		mResetAllButton = (Button) findViewById(R.id.button_reset);
 		mSpinnerStatus = (ProgressBar) findViewById(R.id.spinner_status);
 		mRotaryEncoderValueLabel = (TextView) findViewById(R.id.value_rotary_encoder);
+		mRotEncStopAbove = (CheckBox) findViewById(R.id.checkbox_rotary_encoder_threshold_above);
+		mRotEncStopAboveText = (TextView) findViewById(R.id.label_rotary_encoder_threshold_above_value);
+		mRotEncStopBelow = (CheckBox) findViewById(R.id.checkbox_rotary_encoder_threshold_below);
+		mRotEncStopBelowText = (TextView) findViewById(R.id.label_rotary_encoder_threshold_below_value);
 		
 		// Initialize all views
 		resetViewAndCommands();
 		
 		// connect the listeners
-		mPeripheralCircuitToggle.setOnCheckedChangeListener(mToggleButtonsChangeListener);
-		mWheelsSleepMode.setOnCheckedChangeListener(mToggleButtonsChangeListener);
+		mPeripheralCircuitToggle.setOnCheckedChangeListener(mOnCheckedChangeListener);
+		mWheelsSleepMode.setOnCheckedChangeListener(mOnCheckedChangeListener);
 		mSeekbarLeftWheel.setOnSeekBarChangeListener(mSeekBarChangeListener);
 		mSeekbarRightWheel.setOnSeekBarChangeListener(mSeekBarChangeListener);
 		mSeekbarHead.setOnSeekBarChangeListener(mSeekBarChangeListener);
-		mHeadSleepMode.setOnCheckedChangeListener(mToggleButtonsChangeListener);
+		mHeadSleepMode.setOnCheckedChangeListener(mOnCheckedChangeListener);
+		mRotEncStopAbove.setOnCheckedChangeListener(mOnCheckedChangeListener);
+		mRotEncStopBelow.setOnCheckedChangeListener(mOnCheckedChangeListener);
 		mResetAllButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -187,6 +235,10 @@ public class LowLevelControlActivity extends IOIOActivity {
 		mWheelsSleepMode.setChecked(false);
 		mHeadSleepMode.setChecked(false);
 		mRotaryEncoderValueLabel.setText(R.string.rotary_encoder_value_unknown);
+		mRotEncStopAbove.setChecked(false);
+		mRotEncStopBelow.setChecked(false);
+		mRotEncStopAboveText.setText(Float.toString(ROTARY_ENCODER_MAX));
+		mRotEncStopBelowText.setText(Float.toString(ROTARY_ENCODER_MIN));
 	}
 
 	/**
@@ -257,6 +309,8 @@ public class LowLevelControlActivity extends IOIOActivity {
 			mRotaryEncoderObserver = new RotaryEncoderObserver();
 			mRotaryEncoder.setObserver(mRotaryEncoderObserver);
 			mRotaryEncoder.subscribeToValuesUpdates(100);
+			setThresholdDetection(mRotaryEncoder,mRotEncStopAbove.isChecked(),true);
+			setThresholdDetection(mRotaryEncoder,mRotEncStopBelow.isChecked(),false);
 		}
 
 		/**
@@ -315,6 +369,24 @@ public class LowLevelControlActivity extends IOIOActivity {
 				switchToSwitch.set(newState);
 			} catch (ConnectionLostException e) {
 				setConnectionStatus(false);
+			}
+		}
+	}
+	
+	/**
+	 * Sets the threshold detection (or reset it) for a target analog value reader.
+	 * @param reader target reader
+	 * @param newState if true, the detection will be activated, else it will be deactivated
+	 * @param isAbove tells which threshold detector (high[true] or low[false] values) to target
+	 */
+	private void setThresholdDetection(AnalogValueReader reader,boolean newState, boolean isAbove) {
+		if (reader!=null) {
+			if (isAbove) {
+				float threshold = newState?ROTARY_ENCODER_MAX:Float.NaN;
+				reader.subscribeToRisingEdgeThresholdDetection(threshold);				
+			} else {
+				float threshold = newState?ROTARY_ENCODER_MIN:Float.NaN;
+				reader.subscribeToFallingEdgeThresholdDetection(threshold);						
 			}
 		}
 	}

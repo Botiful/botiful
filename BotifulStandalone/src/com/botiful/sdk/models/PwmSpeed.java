@@ -40,6 +40,13 @@ public class PwmSpeed {
 	}
 	
 	/**
+	 * @return true if the speed is positive or null, false else
+	 */
+	public boolean isPositive() {
+		return (mValue>=0);
+	}
+	
+	/**
 	 * Sets the speed value.
 	 * @param value: value between -10 (full speed, reverse) and 10 (full speed). Clipped if out of range.
 	 */

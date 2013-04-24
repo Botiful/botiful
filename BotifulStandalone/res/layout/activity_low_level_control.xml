@@ -12,8 +12,8 @@
         android:id="@+id/layout_connection_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp" >
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp" >
 	    
 	    <TextView
 	        android:id="@+id/textStatus"
@@ -36,8 +36,8 @@
         android:id="@+id/layout_peripheral_circuit_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_connection_status" >
         
 	    <ToggleButton
@@ -61,8 +61,8 @@
         android:id="@+id/wheels_sleep_mode_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_peripheral_circuit_control" >
         
 	    <ToggleButton
@@ -86,8 +86,8 @@
         android:id="@+id/layout_left_wheel_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/wheels_sleep_mode_control" >
         
 	    <SeekBar
@@ -112,8 +112,8 @@
         android:id="@+id/layout_right_wheel_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_left_wheel_control" >
         
 	    <SeekBar
@@ -138,8 +138,8 @@
         android:id="@+id/head_sleep_mode_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_right_wheel_control" >
         
 	    <ToggleButton
@@ -163,8 +163,8 @@
         android:id="@+id/layout_head_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/head_sleep_mode_control" >
         
 	    <SeekBar
@@ -189,8 +189,8 @@
         android:id="@+id/layout_head_rotaryEncoder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_head_control">
         
 	    <TextView
@@ -209,6 +209,40 @@
 	        android:layout_toRightOf="@+id/label_rotary_encoder"
 	        android:text="@string/rotary_encoder_value_unknown"
 	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	    <CheckBox
+	        android:id="@+id/checkbox_rotary_encoder_threshold_above"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/label_rotary_encoder"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginRight="5dp"
+	        android:text="@string/label_rotary_encoder_threshold_above" />
+	    
+	    <TextView
+	        android:id="@+id/label_rotary_encoder_threshold_above_value"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_toRightOf="@+id/checkbox_rotary_encoder_threshold_above"
+	        android:layout_alignBaseline="@+id/checkbox_rotary_encoder_threshold_above"
+	        android:text="@string/rotary_encoder_value_unknown" />
+
+	    <CheckBox
+	        android:id="@+id/checkbox_rotary_encoder_threshold_below"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/checkbox_rotary_encoder_threshold_above"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginRight="5dp"
+	        android:text="@string/label_rotary_encoder_threshold_below" />
+	    
+	    <TextView
+	        android:id="@+id/label_rotary_encoder_threshold_below_value"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_toRightOf="@+id/checkbox_rotary_encoder_threshold_below"
+	        android:layout_alignBaseline="@+id/checkbox_rotary_encoder_threshold_below"
+	        android:text="@string/rotary_encoder_value_unknown" />
         
     </RelativeLayout>
     
@@ -216,8 +250,8 @@
         android:id="@+id/button_reset"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="1dp"
         android:layout_below="@+id/layout_head_rotaryEncoder"
         android:text="@string/reset_all"
         />
