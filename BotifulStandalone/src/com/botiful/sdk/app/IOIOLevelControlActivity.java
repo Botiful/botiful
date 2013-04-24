@@ -7,8 +7,6 @@ import ioio.lib.api.exception.ConnectionLostException;
 import ioio.lib.util.BaseIOIOLooper;
 import ioio.lib.util.IOIOLooper;
 import ioio.lib.util.android.IOIOActivity;
-import android.bluetooth.BluetoothAdapter;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -17,12 +15,13 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.botiful.standalone.sdk.R;
+import com.botiful.sdk.R;
+import com.botiful.sdk.helpers.BluetoothHelper;
 
 /**
  * This simple example activity demonstrates how to use IOIO to control Botiful
  */
-public class MainActivity extends IOIOActivity {
+public class IOIOLevelControlActivity extends IOIOActivity {
 
 	// Speed for the left motor (range:0-10)
 	private int leftSpeed;
@@ -70,7 +69,7 @@ public class MainActivity extends IOIOActivity {
 		btnHeadDown.setOnTouchListener(hl);
 
 		// Ask to enable Bluetooth if not already enabled
-		enableBluetooth();
+		BluetoothHelper.enableBluetooth(this);
 
 		txtStatus = (TextView) findViewById(R.id.textStatus);
 
@@ -324,17 +323,5 @@ public class MainActivity extends IOIOActivity {
 	@Override
 	protected IOIOLooper createIOIOLooper() {
 		return new Looper();
-	}
-
-	public void enableBluetooth() {
-		int REQUEST_ENABLE_BT = 1;
-
-		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter
-				.getDefaultAdapter();
-		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableBtIntent = new Intent(
-					BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-		}
 	}
 }

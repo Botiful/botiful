@@ -24,16 +24,12 @@ import com.botiful.sdk.robot.AnalogValueReader.AnalogValueObserver;
 import com.botiful.sdk.robot.Constants;
 import com.botiful.sdk.robot.PwmMotor;
 import com.botiful.sdk.robot.Switch;
-import com.botiful.standalone.sdk.R;
+import com.botiful.sdk.R;
 
 /**
  * Simple Example activity to manage all peripherals at low level
  */
-public class LowLevelControlActivity extends IOIOActivity {
-	// constants
-	private static final float ROTARY_ENCODER_MAX = .49f;
-	private static final float ROTARY_ENCODER_MIN = .26f;
-	
+public class MediumLevelControlActivity extends IOIOActivity {	
 	// members - widgets
 	private ToggleButton mPeripheralCircuitToggle;
 	private ToggleButton mWheelsSleepMode;
@@ -61,6 +57,10 @@ public class LowLevelControlActivity extends IOIOActivity {
 	/** Sleep switch for the motors */
 	Switch mWheelsSleepSwitch,mHeadSleepSwitch;
 	
+	/**
+	 * This class describes what happens when the rotary encoder get a new value or 
+	 * triggers an alert.
+	 */
 	private class RotaryEncoderObserver implements AnalogValueObserver {
 
 		@Override
@@ -237,8 +237,8 @@ public class LowLevelControlActivity extends IOIOActivity {
 		mRotaryEncoderValueLabel.setText(R.string.rotary_encoder_value_unknown);
 		mRotEncStopAbove.setChecked(false);
 		mRotEncStopBelow.setChecked(false);
-		mRotEncStopAboveText.setText(Float.toString(ROTARY_ENCODER_MAX));
-		mRotEncStopBelowText.setText(Float.toString(ROTARY_ENCODER_MIN));
+		mRotEncStopAboveText.setText(Float.toString(Constants.ROTARY_ENCODER_MAX_VALUE));
+		mRotEncStopBelowText.setText(Float.toString(Constants.ROTARY_ENCODER_MIN_VALUE));
 	}
 
 	/**
@@ -382,10 +382,10 @@ public class LowLevelControlActivity extends IOIOActivity {
 	private void setThresholdDetection(AnalogValueReader reader,boolean newState, boolean isAbove) {
 		if (reader!=null) {
 			if (isAbove) {
-				float threshold = newState?ROTARY_ENCODER_MAX:Float.NaN;
+				float threshold = newState?Constants.ROTARY_ENCODER_MAX_VALUE:Float.NaN;
 				reader.subscribeToRisingEdgeThresholdDetection(threshold);				
 			} else {
-				float threshold = newState?ROTARY_ENCODER_MIN:Float.NaN;
+				float threshold = newState?Constants.ROTARY_ENCODER_MIN_VALUE:Float.NaN;
 				reader.subscribeToFallingEdgeThresholdDetection(threshold);						
 			}
 		}

@@ -13,7 +13,10 @@ import android.util.Log;
  * - alerts when reaching a predefined threshold
  */
 public class AnalogValueReader extends AbstractRoboticElement {
-	/** Threshold to protect from abusive above/under threshold notifications 
+	/**
+	 * Threshold to protect from abusive above/under threshold notifications.
+	 * It prevents multiple detections when the analog value is slightly oscillating
+	 * around its value. 
 	 * @value {@value #HYSTERESIS_PROTECTION_RANGE} */
 	private static final float HYSTERESIS_PROTECTION_RANGE = 0.01f;
 	
