@@ -26,7 +26,7 @@ import com.botiful.sdk.robot.Constants;
  * All actions are managed inside a periodic loop which runs in its own thread, it is mostly
  * managed by the IOIOActivity (except for its creation in the createIOIOLooper() method).
  */
-public class IOIOLevelControlActivity extends IOIOActivity {
+public class SimpleActivity extends IOIOActivity {
 	
 	// speeds of the various motors
 	private PwmSpeed leftSpeed,rightSpeed,headSpeed;
