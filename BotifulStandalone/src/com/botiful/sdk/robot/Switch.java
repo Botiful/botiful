@@ -10,13 +10,13 @@ import ioio.lib.api.exception.ConnectionLostException;
  * WARNING: the inner state is the OPPOSITE of the digital output value!
  */
 public class Switch extends AbstractRoboticElement {
-	private boolean mState;
-	private DigitalOutput mDigitalOutput;
+	private boolean state_;
+	private DigitalOutput digitalOutput_;
 	
 	public Switch(IOIO ioio, int digitalOutputPin, boolean initialState) throws ConnectionLostException {
 		super(ioio);
-		mState = initialState;
-		mDigitalOutput = ioio.openDigitalOutput(digitalOutputPin, !initialState);
+		state_ = initialState;
+		digitalOutput_ = ioio.openDigitalOutput(digitalOutputPin, !initialState);
 	}
 	
 	/**
@@ -25,9 +25,9 @@ public class Switch extends AbstractRoboticElement {
 	 * @param state new value.
 	 */
 	public void set(boolean state) throws ConnectionLostException {
-		if (state != mState) {
-			mDigitalOutput.write(!state);
-			mState = state;
+		if (state != state_) {
+			digitalOutput_.write(!state);
+			state_ = state;
 		}
 	}
 
@@ -37,8 +37,8 @@ public class Switch extends AbstractRoboticElement {
 	 * @param state new value.
 	 */
 	public void forceSet(boolean state) throws ConnectionLostException {
-		mDigitalOutput.write(!state);
-		mState = state;
+		digitalOutput_.write(!state);
+		state_ = state;
 	}
 
 }

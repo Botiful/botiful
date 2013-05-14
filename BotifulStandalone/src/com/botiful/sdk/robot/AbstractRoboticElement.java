@@ -7,13 +7,13 @@ import ioio.lib.api.IOIO;
  */
 public abstract class AbstractRoboticElement {
 	/** reference to the target IOIO */
-	protected IOIO mIOIO;
+	protected IOIO IOIO_;
 	
 	/**
 	 * Constructor
 	 * @param ioio handle to the IOIO object used to communicate with the physical robot
 	 */
 	protected AbstractRoboticElement(IOIO ioio) {
-		mIOIO = ioio;
+		IOIO_ = ioio;
 	}
 }

@@ -10,9 +10,9 @@ import com.botiful.sdk.models.PwmSpeed;
  * Class to manage PWN-based motors
  */
 public class PwmMotor extends AbstractRoboticElement {
-	private PwmOutput mPwmPositiveOutput;
-	private PwmOutput mPwmReverseOutput;
-	private PwmSpeed mPwmSpeed; 
+	private PwmOutput pwmPositiveOutput_;
+	private PwmOutput pwmReverseOutput_;
+	private PwmSpeed pwmSpeed_; 
 	
 	/**
 	 * Build the PwmMotor objects and associates it to the target PWM output pins
@@ -24,9 +24,9 @@ public class PwmMotor extends AbstractRoboticElement {
 	public PwmMotor(IOIO ioio, int positivePwmOutputPin, int reversePwmOutputPin) throws ConnectionLostException {
 		super(ioio);
 		
-		mPwmSpeed = new PwmSpeed();
-		mPwmPositiveOutput = ioio.openPwmOutput(positivePwmOutputPin, Constants.PWM_FREQUENCY);
-		mPwmReverseOutput = ioio.openPwmOutput(reversePwmOutputPin, Constants.PWM_FREQUENCY);
+		pwmSpeed_ = new PwmSpeed();
+		pwmPositiveOutput_ = ioio.openPwmOutput(positivePwmOutputPin, Constants.PWM_FREQUENCY);
+		pwmReverseOutput_ = ioio.openPwmOutput(reversePwmOutputPin, Constants.PWM_FREQUENCY);
 	}
 	
 	/**
@@ -36,10 +36,10 @@ public class PwmMotor extends AbstractRoboticElement {
 	 * @throws ConnectionLostException when connection to the robot is lost
 	 */
 	public void setSpeed(PwmSpeed newSpeed) throws ConnectionLostException {
-		if (newSpeed!=null && !mPwmSpeed.equals(newSpeed)) {
-			mPwmSpeed = newSpeed;
-			mPwmPositiveOutput.setPulseWidth(mPwmSpeed.getPulseWidthForPositivePin());
-			mPwmReverseOutput.setPulseWidth(mPwmSpeed.getPulseWidthForReversePin());
+		if (newSpeed!=null && !pwmSpeed_.equals(newSpeed)) {
+			pwmSpeed_ = newSpeed;
+			pwmPositiveOutput_.setPulseWidth(pwmSpeed_.getPulseWidthForPositivePin());
+			pwmReverseOutput_.setPulseWidth(pwmSpeed_.getPulseWidthForReversePin());
 		}
 	}
 	
@@ -52,7 +52,7 @@ public class PwmMotor extends AbstractRoboticElement {
 	}
 	
 	public PwmSpeed getSpeed() {
-		return mPwmSpeed;
+		return pwmSpeed_;
 	}
 
 }

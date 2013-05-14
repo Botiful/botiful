@@ -10,10 +10,10 @@ public class HysteresisComparator {
 	public static final int EVENT_RISING_EDGE=1;
 	public static final int EVENT_FALLING_EDGE=2;
 	
-	private float mLowThreshold;
-	private float mHighThreshold;
-	private boolean mIsStateHigh;
-	private int mLastEvent;
+	private float lowThreshold_;
+	private float highThreshold_;
+	private boolean isStateHigh_;
+	private int lastEvent_;
 	
 	/**
 	 * Instantiate the comparator, initializes all values<br />
@@ -22,9 +22,9 @@ public class HysteresisComparator {
 	 * @param defaultState default state to use (true<=>high state)
 	 */
 	public HysteresisComparator(float lowThreshold,float highThreshold, boolean defaultState) {
-		mLowThreshold =  lowThreshold;
-		mHighThreshold = highThreshold;
-		mIsStateHigh = defaultState;
+		lowThreshold_ =  lowThreshold;
+		highThreshold_ = highThreshold;
+		isStateHigh_ = defaultState;
 	}
 	
 	/**
@@ -32,14 +32,14 @@ public class HysteresisComparator {
 	 * @return the latest comparator event triggered (one of the EVENT_... constants)
 	 */
 	public int getLastEvent() {
-		return mLastEvent;
+		return lastEvent_;
 	}
 	
 	/**
 	 * @return the current state of the comparator (high=true, low=false)
 	 */
 	public boolean getState() {
-		return mIsStateHigh;
+		return isStateHigh_;
 	}
 
 	/**
@@ -52,20 +52,20 @@ public class HysteresisComparator {
 	 * @return a comparator event constant (one of the EVENT_... constants) if one has just triggered by the new value
 	 */
 	public int inputNewValue(float newValue) {
-		mLastEvent = EVENT_NONE;
-		if (mIsStateHigh) {
-			if (newValue <= mLowThreshold) {
-				mIsStateHigh = false;
-				mLastEvent = EVENT_FALLING_EDGE;
+		lastEvent_ = EVENT_NONE;
+		if (isStateHigh_) {
+			if (newValue <= lowThreshold_) {
+				isStateHigh_ = false;
+				lastEvent_ = EVENT_FALLING_EDGE;
 			}
 		} else {
-			if (newValue >= mHighThreshold) {
-				mIsStateHigh = true;
-				mLastEvent = EVENT_RISING_EDGE;
+			if (newValue >= highThreshold_) {
+				isStateHigh_ = true;
+				lastEvent_ = EVENT_RISING_EDGE;
 			}
 		}
 		
-		return mLastEvent;
+		return lastEvent_;
 	}
 	
 }

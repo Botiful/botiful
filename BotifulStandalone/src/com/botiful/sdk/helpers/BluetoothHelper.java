@@ -16,8 +16,8 @@ public class BluetoothHelper {
 	 * @param fromActivity: calling activity.
 	 */
 	public static void enableBluetooth(Activity fromActivity) {
-		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (!mBluetoothAdapter.isEnabled()) {
+		BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (!bluetoothAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			fromActivity.startActivityForResult(enableBtIntent, REQUEST_CODE_INTENT_ENABLE_BT);
 		}

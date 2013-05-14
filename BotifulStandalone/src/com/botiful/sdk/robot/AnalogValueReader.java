@@ -20,19 +20,19 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * @value {@value #HYSTERESIS_PROTECTION_RANGE} */
 	private static final float HYSTERESIS_PROTECTION_RANGE = 0.01f;
 	
-	private AnalogInput mAnalogInput;
+	private AnalogInput analogInput_;
 	/** Observer notified of new values or alerts. Also used as control variable for the thread */
-	private AnalogValueObserver mObserver;
+	private AnalogValueObserver observer_;
 	/** Last value observed if any, or NaN */
-	private float mLastValue;
+	private float lastValue_;
 	/** a thread to wait for incoming value and store them */
-	private Thread mReaderThread;
+	private Thread readerThread_;
 	// two kinds of notifications: regular value updates or threshold detection
 	/** minimum update period to notify the observer in milliseconds */
-	private long mNotificationPeriodMillis;
-	private boolean mObserverWantsPeriodicNotifications;
+	private long notificationPeriodMillis_;
+	private boolean observerWantsPeriodicNotifications_;
 	/** Threshold detectors */
-	private HysteresisComparator mRisingEdgeDetector,mFallingEdgeDetector;
+	private HysteresisComparator risingEdgeDetector_,fallingEdgeDetector_;
 	
 	/**
 	 * A custom interface to specify entry point for asynchronous updates
@@ -70,47 +70,47 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	public AnalogValueReader(IOIO ioio, int pin) throws ConnectionLostException {
 		super(ioio);
 		
-		mAnalogInput = mIOIO.openAnalogInput(pin);
-		mAnalogInput.setBuffer(8); // we don't need a large buffer, 8 samples is more that enough
-		mObserver = null;
-		mLastValue = Float.NaN;
-		mObserverWantsPeriodicNotifications = false;
-		mRisingEdgeDetector = null;
-		mFallingEdgeDetector = null;
-		mReaderThread = null;
+		analogInput_ = IOIO_.openAnalogInput(pin);
+		analogInput_.setBuffer(8); // we don't need a large buffer, 8 samples is more that enough
+		observer_ = null;
+		lastValue_ = Float.NaN;
+		observerWantsPeriodicNotifications_ = false;
+		risingEdgeDetector_ = null;
+		fallingEdgeDetector_ = null;
+		readerThread_ = null;
 		
 	}
 	
 	private void createAndStartReaderThread() {
-		mReaderThread = new Thread() {
+		readerThread_ = new Thread() {
 			@Override
 			public void run() {
 				long lastMotificationTimestampMillis = 0;
-				while (mObserver!=null) {
+				while (observer_!=null) {
 					try {
 						// get the current value (blocks until data is available)
-						mLastValue=mAnalogInput.readBuffered();
+						lastValue_=analogInput_.readBuffered();
 						
 						// notify of new values if needed, record the date
 						long timestamp = SystemClock.elapsedRealtime();
-						if (mObserverWantsPeriodicNotifications &&
-								(timestamp-lastMotificationTimestampMillis>mNotificationPeriodMillis)) {
-							if (mObserver!=null) {
-								mObserver.onNewValue(mLastValue);
+						if (observerWantsPeriodicNotifications_ &&
+								(timestamp-lastMotificationTimestampMillis>notificationPeriodMillis_)) {
+							if (observer_!=null) {
+								observer_.onNewValue(lastValue_);
 							}
 							lastMotificationTimestampMillis = timestamp;
 						}
 						
 						// notify of threshold detection
-						if (mRisingEdgeDetector != null && 
-								HysteresisComparator.EVENT_RISING_EDGE == mRisingEdgeDetector.inputNewValue(mLastValue) &&
-								mObserver!=null) {
-							mObserver.onValueAlertAboveThreshold(mLastValue);
+						if (risingEdgeDetector_ != null && 
+								HysteresisComparator.EVENT_RISING_EDGE == risingEdgeDetector_.inputNewValue(lastValue_) &&
+								observer_!=null) {
+							observer_.onValueAlertAboveThreshold(lastValue_);
 						}
-						if (mFallingEdgeDetector != null && 
-								HysteresisComparator.EVENT_FALLING_EDGE == mFallingEdgeDetector.inputNewValue(mLastValue) &&
-								mObserver!=null) {
-							mObserver.onValueAlertBelowThreshold(mLastValue);
+						if (fallingEdgeDetector_ != null && 
+								HysteresisComparator.EVENT_FALLING_EDGE == fallingEdgeDetector_.inputNewValue(lastValue_) &&
+								observer_!=null) {
+							observer_.onValueAlertBelowThreshold(lastValue_);
 						}
 						
 					} catch (InterruptedException e) {
@@ -118,10 +118,10 @@ public class AnalogValueReader extends AbstractRoboticElement {
 						Log.w(this.getClass().getName(),e);
 					} catch (ConnectionLostException e) {
 						// connection to bot lost -- cancel this thread
-						mObserver = null;
-						mObserverWantsPeriodicNotifications = false;
-						mRisingEdgeDetector = null;
-						mFallingEdgeDetector = null;
+						observer_ = null;
+						observerWantsPeriodicNotifications_ = false;
+						risingEdgeDetector_ = null;
+						fallingEdgeDetector_ = null;
 						// log
 						Log.e(this.getClass().getName(),e.getMessage());
 					}
@@ -129,8 +129,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 
 			}
 		};
-		mReaderThread.setPriority(8); // should be as close to real-time as possible, but we don't want to freeze the UI either
-		mReaderThread.start();
+		readerThread_.setPriority(8); // should be as close to real-time as possible, but we don't want to freeze the UI either
+		readerThread_.start();
 	}
 	
 	/**
@@ -140,7 +140,7 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * @return the latest analog value read, in the [0,1] range, or Float.Nan if not available
 	 */
 	public float getLastValue() {
-		return mLastValue;
+		return lastValue_;
 	}
 	
 	/**
@@ -149,11 +149,11 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * @param observer the AnalogValueObserver to add
 	 */
 	public void setObserver(AnalogValueObserver observer) {
-		mObserver = observer;
+		observer_ = observer;
 		if (observer==null) {
 			return;
 		}
-		if (mReaderThread==null) {
+		if (readerThread_==null) {
 			// start the treader thread, be prepared for observations.
 			createAndStartReaderThread();
 		}
@@ -165,8 +165,8 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * @param updatePeriodMillis minimum update period in milliseconds
 	 */
 	public void subscribeToValuesUpdates(int updatePeriodMillis) {
-		mNotificationPeriodMillis = Math.max(0, updatePeriodMillis);
-		mObserverWantsPeriodicNotifications = true;
+		notificationPeriodMillis_ = Math.max(0, updatePeriodMillis);
+		observerWantsPeriodicNotifications_ = true;
 	}
 
 	
@@ -178,9 +178,9 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 */
 	public void subscribeToRisingEdgeThresholdDetection(float threshold) {
 		if (Float.isNaN(threshold)) {
-			mRisingEdgeDetector = null;
+			risingEdgeDetector_ = null;
 		} else {
-			mRisingEdgeDetector = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
+			risingEdgeDetector_ = new HysteresisComparator(threshold-HYSTERESIS_PROTECTION_RANGE,
 					threshold,
 					false);
 		}
@@ -194,9 +194,9 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 */
 	public void subscribeToFallingEdgeThresholdDetection(float threshold) {
 		if (Float.isNaN(threshold)) {
-			mFallingEdgeDetector = null;
+			fallingEdgeDetector_ = null;
 		} else {
-			mFallingEdgeDetector = new HysteresisComparator(threshold,
+			fallingEdgeDetector_ = new HysteresisComparator(threshold,
 					threshold+HYSTERESIS_PROTECTION_RANGE,
 					true);
 		}
@@ -206,12 +206,12 @@ public class AnalogValueReader extends AbstractRoboticElement {
 	 * Removes the observer if any. Resets all observations and stops the reading thread (no more async anything)
 	 */
 	public void deleteObserver() {
-		mObserver = null; // this causes the thread to quit
-		mObserverWantsPeriodicNotifications = false;
-		mRisingEdgeDetector = null;
-		mFallingEdgeDetector = null;
+		observer_ = null; // this causes the thread to quit
+		observerWantsPeriodicNotifications_ = false;
+		risingEdgeDetector_ = null;
+		fallingEdgeDetector_ = null;
 		try {
-			mReaderThread.join();
+			readerThread_.join();
 		} catch (InterruptedException e) {
 			// void
 		}
